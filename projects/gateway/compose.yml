@@ -9,7 +9,7 @@
 services:
   proxy:
     container_name: traefik
-    image: traefik:v3.6.17
+    image: traefik:v3.7.9
     restart: unless-stopped
     depends_on:
       - errors
@@ -38,7 +38,7 @@ services:
 
   errors:
     container_name: traefik-errors
-    image: nginx:1.27.4-alpine
+    image: nginx:1.28.3-alpine
     restart: unless-stopped
     volumes:
       - ./static/errors/nginx.conf:/etc/nginx/conf.d/default.conf:ro
