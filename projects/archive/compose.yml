@@ -36,7 +36,7 @@ services:
 
   karakeep-chrome:
     container_name: karakeep-chrome
-    image: ghcr.io/browserless/chromium:v2.50.0
+    image: ghcr.io/browserless/chromium:v2.55.0
     restart: unless-stopped
     environment:
       - CONCURRENT=5
