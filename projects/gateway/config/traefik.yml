@@ -1,3 +1,5 @@
+# Keep this file UTF-8 encoded and use ASCII-only comments. Invalid bytes make
+# Traefik exit at startup with "yaml: invalid leading UTF-8 octet".
 global:
   checkNewVersion: false
   sendAnonymousUsage: false
@@ -22,6 +24,8 @@ entryPoints:
               - "*.tn.ojizero.dev"
               - "*.ln.ojizero.dev"
               - "*.wn.ojizero.dev"
+              # Nested Buzz communities (*.tn... covers buzz.tn..., not *.buzz.tn...).
+              - "*.buzz.tn.ojizero.dev"
 
 providers:
   docker:

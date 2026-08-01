@@ -1,0 +1,189 @@
+---
+services:
+  postgres:
+    container_name: buzz-postgres
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-buzz}
+      POSTGRES_USER: ${POSTGRES_USER:-buzz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${BUZZ_POSTGRES_PATH:-./configs/postgres}:/var/lib/postgresql/data
+    networks:
+      - buzz-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    container_name: buzz-redis
+    image: redis:7.4.10-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    volumes:
+      - ${BUZZ_REDIS_PATH:-./configs/redis}:/data
+    networks:
+      - buzz-backend
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  # RustFS runs as UID/GID 10001; bind mounts need ownership before startup.
+  rustfs-volume-init:
+    container_name: buzz-rustfs-volume-init
+    image: alpine:3.22.1
+    user: "0:0"
+    command:
+      - sh
+      - -ec
+      - mkdir -p /data && chown -R 10001:10001 /data
+    volumes:
+      - ${BUZZ_RUSTFS_PATH:-./configs/rustfs}:/data
+    restart: "no"
+
+  rustfs:
+    container_name: buzz-rustfs
+    # Digest for 1.0.0-beta.11 index: sha256:84ce557a0245a06a9aae5516f55ee0f007fca78d41df356f419306fdc0cb168c
+    image: rustfs/rustfs:1.0.0-beta.11
+    restart: unless-stopped
+    # SNSD: volume path is the container command argument.
+    command: ["/data"]
+    environment:
+      RUSTFS_ACCESS_KEY: ${BUZZ_S3_ACCESS_KEY:?set BUZZ_S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${BUZZ_S3_SECRET_KEY:?set BUZZ_S3_SECRET_KEY}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_OBS_LOGGER_LEVEL: info
+    volumes:
+      - ${BUZZ_RUSTFS_PATH:-./configs/rustfs}:/data
+    networks:
+      - buzz-backend
+    depends_on:
+      rustfs-volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+
+  # mc talks S3 to RustFS (documented by upstream) for private bucket bootstrap.
+  rustfs-init:
+    container_name: buzz-rustfs-init
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    environment:
+      BUZZ_S3_ACCESS_KEY: ${BUZZ_S3_ACCESS_KEY:?set BUZZ_S3_ACCESS_KEY}
+      BUZZ_S3_SECRET_KEY: ${BUZZ_S3_SECRET_KEY:?set BUZZ_S3_SECRET_KEY}
+      BUZZ_S3_BUCKET: ${BUZZ_S3_BUCKET:-buzz-media}
+    entrypoint: >
+      /bin/sh -euc '
+        mc alias set local http://rustfs:9000 "$${BUZZ_S3_ACCESS_KEY}" "$${BUZZ_S3_SECRET_KEY}"
+        mc mb --ignore-existing "local/$${BUZZ_S3_BUCKET}"
+        mc anonymous set none "local/$${BUZZ_S3_BUCKET}"
+      '
+    restart: "no"
+    networks:
+      - buzz-backend
+
+  # Fresh Git volumes can be root-owned; relay runs as UID 1000 (block/buzz#2814).
+  git-volume-init:
+    container_name: buzz-git-volume-init
+    image: busybox:1.37
+    user: "0:0"
+    command:
+      - sh
+      - -ec
+      - mkdir -p /data/git/.pack-cache && chown -R 1000:1000 /data/git
+    volumes:
+      - ${BUZZ_GIT_PATH:-./configs/git}:/data/git
+    restart: "no"
+
+  relay:
+    container_name: buzz-relay
+    # Pin relay-v* / sha-* / digest; never use :main unattended.
+    # Digest for 0.2.0 index: sha256:a0f67203d71d15d237fa7517788799957c30c8acdb81cbcff711e07e951c2710
+    image: ghcr.io/block/buzz:0.2.0
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BUZZ_BIND_ADDR: 0.0.0.0:3000
+      BUZZ_HEALTH_PORT: "8080"
+      BUZZ_METRICS_PORT: "9102"
+      DATABASE_URL: postgres://${POSTGRES_USER:-buzz}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-buzz}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      BUZZ_S3_ENDPOINT: http://rustfs:9000
+      BUZZ_S3_ACCESS_KEY: ${BUZZ_S3_ACCESS_KEY}
+      BUZZ_S3_SECRET_KEY: ${BUZZ_S3_SECRET_KEY}
+      BUZZ_S3_BUCKET: ${BUZZ_S3_BUCKET:-buzz-media}
+      BUZZ_GIT_REPO_PATH: /data/git
+      BUZZ_GIT_PACK_CACHE_PATH: /data/git/.pack-cache
+      BUZZ_AUTO_MIGRATE: ${BUZZ_AUTO_MIGRATE:-true}
+      BUZZ_GIT_CONFORMANCE_PROBE: ${BUZZ_GIT_CONFORMANCE_PROBE:-true}
+    volumes:
+      - ${BUZZ_GIT_PATH:-./configs/git}:/data/git
+    expose:
+      - "3000"
+    networks:
+      - servicenet
+      - buzz-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+      rustfs-init:
+        condition: service_completed_successfully
+      git-volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /_readiness HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3'",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - traefik.enable=true
+      # Host selects community. Apex = seeded deployment community; *.buzz.tn… = others.
+      - traefik.http.routers.buzz.entrypoints=web-secure
+      - traefik.http.routers.buzz.rule=Host(`buzz.tn.ojizero.dev`) || Host(`*.buzz.tn.ojizero.dev`)
+      - traefik.http.routers.buzz.service=buzz
+      - traefik.http.services.buzz.loadbalancer.server.port=3000
+
+networks:
+  servicenet:
+    name: servicenet
+    external: true
+
+  buzz-backend:
+    name: buzz-backend
+    driver: bridge
+    internal: true
