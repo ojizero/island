@@ -46,7 +46,7 @@ services:
   # RustFS runs as UID/GID 10001; bind mounts need ownership before startup.
   rustfs-volume-init:
     container_name: buzz-rustfs-volume-init
-    image: alpine:3.22.1
+    image: alpine:3.22.5
     user: "0:0"
     command:
       - sh
@@ -58,8 +58,8 @@ services:
 
   rustfs:
     container_name: buzz-rustfs
-    # Digest for 1.0.0-beta.11 index: sha256:84ce557a0245a06a9aae5516f55ee0f007fca78d41df356f419306fdc0cb168c
-    image: rustfs/rustfs:1.0.0-beta.11
+    # Digest for 1.0.0-beta.12 index: sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21
+    image: rustfs/rustfs:1.0.0-beta.12
     restart: unless-stopped
     # SNSD: volume path is the container command argument.
     command: ["/data"]
@@ -122,8 +122,9 @@ services:
   relay:
     container_name: buzz-relay
     # Pin relay-v* / sha-* / digest; never use :main unattended.
-    # Digest for 0.2.0 index: sha256:a0f67203d71d15d237fa7517788799957c30c8acdb81cbcff711e07e951c2710
-    image: ghcr.io/block/buzz:0.2.0
+    # No newer relay-v* than 0.2.0 yet; sha-ac4fa13 is current main tip (includes admin-web).
+    # Digest for sha-ac4fa13 index: sha256:510978bb0bc168cd69af55ea46a307bfc935268939f6df844623344999fde7ef
+    image: ghcr.io/block/buzz:sha-ac4fa13
     restart: unless-stopped
     env_file: .env
     environment:
