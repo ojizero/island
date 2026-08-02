@@ -68,7 +68,7 @@ services:
       RUSTFS_SECRET_KEY: ${BUZZ_S3_SECRET_KEY:?set BUZZ_S3_SECRET_KEY}
       RUSTFS_ADDRESS: 0.0.0.0:9000
       RUSTFS_CONSOLE_ENABLE: "false"
-      RUSTFS_OBS_LOGGER_LEVEL: info
+      RUSTFS_OBS_LOGGER_LEVEL: warn
     volumes:
       - ${BUZZ_RUSTFS_PATH:-./configs/rustfs}:/data
     networks:
@@ -174,8 +174,9 @@ services:
     labels:
       - traefik.enable=true
       # Host selects community. Apex = seeded deployment community; *.buzz.tn… = others.
+      # buzzadm.tn… is the deployment-admin SPA host (BUZZ_ADMIN_HOST), not a community.
       - traefik.http.routers.buzz.entrypoints=web-secure
-      - traefik.http.routers.buzz.rule=Host(`buzz.tn.ojizero.dev`) || Host(`*.buzz.tn.ojizero.dev`)
+      - traefik.http.routers.buzz.rule=Host(`buzz.tn.ojizero.dev`) || Host(`*.buzz.tn.ojizero.dev`) || Host(`buzzadm.tn.ojizero.dev`)
       - traefik.http.routers.buzz.service=buzz
       - traefik.http.services.buzz.loadbalancer.server.port=3000
 
