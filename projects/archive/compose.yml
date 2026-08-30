@@ -1,11 +1,6 @@
 ---
 x-data-target: &data-target /data
 
-x-data-vault: &data-vault
-  type: bind
-  source: ${DATA_VAULT_PATH:-/archive}
-  target: *data-target
-
 services:
   karakeep-web:
     container_name: karakeep-web
@@ -14,13 +9,15 @@ services:
     environment:
       DATA_DIR: *data-target
       MEILI_ADDR: http://karakeep-meilisearch:7700
-      NEXTAUTH_URL: https://keep.tn.ojizero.dev
+      NEXTAUTH_URL: https://keep.ojizero.dev
       BROWSER_WEB_URL: http://karakeep-chrome:3000
     env_file:
       - .env
     # user: ${PUID:-1000}:${PGID:-1000}
     volumes:
-      - <<: *data-vault
+      - type: bind
+        source: ${DATA_VAULT_PATH:-/archive}/karakeep
+        target: *data-target
     expose:
       - "3000"
     networks:
@@ -30,7 +27,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.karakeep.entrypoints=web-secure
-      - traefik.http.routers.karakeep.rule=Host(`keep.tn.ojizero.dev`) || Host(`keep.ln.ojizero.dev`)
+      - traefik.http.routers.karakeep.rule=Host(`keep.ojizero.dev`) || Host(`keep.tn.ojizero.dev`) || Host(`keep.ln.ojizero.dev`)
       - traefik.http.routers.karakeep.service=karakeep
       - traefik.http.services.karakeep.loadbalancer.server.port=3000
 
@@ -66,6 +63,38 @@ services:
       - "7700"
     networks:
       - offline-sphere
+
+  hister:
+    container_name: hister
+    image: ghcr.io/asciimoo/hister:v0.18.0
+    init: true
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      HISTER__SERVER__ADDRESS: 0.0.0.0:4433
+      HISTER__SERVER__BASE_URL: https://hister.tn.ojizero.dev
+      HISTER__APP__USER_HANDLING: "true"
+    user: ${PUID:-1000}:${PGID:-1000}
+    volumes:
+      - type: bind
+        source: ${DATA_VAULT_PATH:-/archive}/hister
+        target: /hister/data
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    expose:
+      - "4433"
+    networks:
+      - servicenet
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.hister.entrypoints=web-secure
+      - traefik.http.routers.hister.rule=Host(`hister.tn.ojizero.dev`)
+      - traefik.http.routers.hister.service=hister
+      - traefik.http.services.hister.loadbalancer.server.port=4433
 
 networks:
   servicenet:
