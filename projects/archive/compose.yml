@@ -95,6 +95,14 @@ services:
       - traefik.http.routers.hister.rule=Host(`hister.tn.ojizero.dev`)
       - traefik.http.routers.hister.service=hister
       - traefik.http.services.hister.loadbalancer.server.port=4433
+      # v0.18.0 refreshes signed-in sessions even for public assets. A failed
+      # refresh returns text/plain HTTP 500 and prevents the frontend loading.
+      # Serve immutable assets without cookies to avoid that session write.
+      - traefik.http.routers.hister-assets.entrypoints=web-secure
+      - traefik.http.routers.hister-assets.rule=Host(`hister.tn.ojizero.dev`) && PathPrefix(`/_app/immutable/`)
+      - traefik.http.routers.hister-assets.service=hister
+      - traefik.http.routers.hister-assets.middlewares=hister-assets-no-cookie
+      - traefik.http.middlewares.hister-assets-no-cookie.headers.customrequestheaders.Cookie=
 
 networks:
   servicenet:
