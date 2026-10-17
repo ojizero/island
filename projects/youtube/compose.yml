@@ -2,7 +2,7 @@
 services:
   invidious:
     container_name: invidious
-    image: quay.io/invidious/invidious:2026.08.23-4daa142
+    image: quay.io/invidious/invidious:2026.10.13-57cc097
     restart: unless-stopped
     environment:
       INVIDIOUS_CONFIG: |
@@ -48,7 +48,7 @@ services:
 
   invidious-companion:
     container_name: invidious-companion
-    image: quay.io/invidious/invidious-companion:2026.08.10-16cf10e
+    image: quay.io/invidious/invidious-companion:2026.09.19-bb3b37f
     restart: unless-stopped
     environment:
       - SERVER_SECRET_KEY=${INVIDIOUS_COMPANION_KEY}
