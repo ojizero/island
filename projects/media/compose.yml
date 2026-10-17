@@ -12,7 +12,7 @@ x-environment: &environment
 services:
   jellyfin:
     container_name: jellyfin
-    image: linuxserver/jellyfin:10.11.11ubu2604-ls47
+    image: linuxserver/jellyfin:12.2ubu2604-ls54
     restart: unless-stopped
     environment: *environment
     volumes:
