@@ -21,4 +21,14 @@ Each stack lives at `projects/<name>/` with a `compose.yml`. Secrets stay in git
 
 - Pin image tags; never use `latest`
 - Traefik-routed services join the external `servicenet` network
-- Agent skill: `.agents/skills/upgrade-stack` bumps stack image tags
+
+## Agent access
+
+Agents working here expect:
+
+- an SSH host `atlas` in `~/.ssh/config` that reaches Atlas over Tailscale
+- a Docker context `atlas` on top of it, for reading deployed state:
+
+  ```sh
+  docker context create atlas --docker host=ssh://atlas
+  ```
