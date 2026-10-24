@@ -2,7 +2,7 @@
 services:
   liminal:
     container_name: liminal
-    image: ghcr.io/ojizero/liminal:1.12.2
+    image: ghcr.io/ojizero/liminal:1.13.0
     restart: unless-stopped
     environment:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
