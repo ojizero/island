@@ -1,0 +1,2 @@
+[tools]
+"npm:@sentry/dotagents" = "3.4.0"

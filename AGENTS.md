@@ -7,6 +7,7 @@ Docker Compose stacks for the Synology NAS "Atlas".
 - `projects/<stack>/compose.yml`: one stack per directory. Secrets live in git-ignored `.env` files, templated by `.env.sample`.
 - `tasks/`: DSM scripts.
 - `UPGRADES.md`: caveats for upgrading and deploying stacks.
+- `skills/<name>/SKILL.md`: the agent skills. dotagents installs them per `agents.toml` into the git-ignored `.agents/` and `.claude/` as copies, so run `dotagents --project install` after editing one.
 
 ## Subagents
 

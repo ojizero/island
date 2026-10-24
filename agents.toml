@@ -1,0 +1,6 @@
+version = 1
+agents = ["claude", "codex", "cursor", "opencode", "pi"]
+
+[[skills]]
+name = "*"
+source = "path:./skills"

@@ -6,6 +6,7 @@ Homelab config for the Synology NAS ("Atlas"): Docker Compose stacks and DSM tas
 
 ```
 projects/   # Compose stacks (gateway, media, archive, …)
+skills/     # Agent skills, installed by dotagents
 tasks/      # Synology/DSM scripts (e.g. free ports 80/443)
 ```
 
@@ -31,4 +32,11 @@ Agents working here expect:
 
   ```sh
   docker context create atlas --docker host=ssh://atlas
+  ```
+
+- the skills installed for Claude, Codex, Cursor, OpenCode, and Pi:
+
+  ```sh
+  mise install
+  dotagents --project install
   ```
