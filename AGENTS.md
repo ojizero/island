@@ -6,11 +6,11 @@ Docker Compose stacks for the Synology NAS "Atlas".
 
 - `projects/<stack>/compose.yml`: one stack per directory. Secrets live in git-ignored `.env` files, templated by `.env.sample`.
 - `tasks/`: DSM scripts.
-- `UPGRADES.md`: caveats for upgrading stacks.
+- `UPGRADES.md`: caveats for upgrading and deploying stacks.
 
 ## Atlas
 
-Atlas is the SSH host `atlas` (`ssh atlas`), and the Docker context `atlas` connects through it. Atlas has no git: each stack is a plain directory at `/volume1/docker/<stack>/` holding the deployed files, the user's `.env`, and service data.
+Atlas is the SSH host `atlas` (`ssh atlas`), and the Docker context `atlas` connects through it. Atlas has no git: each stack is a plain directory at `/volume1/docker/<stack>/` holding the deployed files, the user's `.env`, and service data. Its Compose is v2.20.1. SFTP is disabled, so copy files with `scp -O`; rsync is refused.
 
 Deployed state can drift from the repo, so check it there:
 
