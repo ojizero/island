@@ -42,7 +42,8 @@ When you cannot settle how to proceed with a candidate (its migration is ambiguo
 
 6. **Report.**
 
-   | Service | Old | New | Changes | May break |
-   |---|---|---|---|---|
+   - **Upgraded**: Service | Old | New | Changes | May break
+   - **Held**: Service | Tag | Reason
+   - **Already latest**: Service | Tag
 
-   A held service keeps its old tag under New, with the reason under Changes. Below the table, the major notes for the deployer to consider, such as a one-way migration.
+   Below the tables, the major notes for the deployer to consider, such as a one-way migration.
