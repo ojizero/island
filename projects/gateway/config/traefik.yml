@@ -8,6 +8,10 @@ entryPoints:
   web:
     address: ":80"
     http:
+      # Drop request headers whose name aliases another (X_Real_Ip for
+      # X-Real-Ip): CGI/PHP/WSGI-style backends read them as the header
+      # Traefik manages, which lets a client spoof it.
+      aliasHeadersStrategy: delete
       redirections:
         entryPoint:
           to: ":443"
@@ -15,6 +19,7 @@ entryPoints:
   web-secure:
     address: ":443"
     http:
+      aliasHeadersStrategy: delete
       tls:
         certResolver: letsencrypt
         domains:
