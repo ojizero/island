@@ -1,7 +1,7 @@
 # Forgejo runner config for the forge stack (DIND sidecar).
 #
 # 1. Generate a baseline and copy to ${FORGEJO_RUNNER_DATA_PATH}/config.yml:
-#      docker run --rm code.forgejo.org/forgejo/runner:13.2.0 \
+#      docker run --rm code.forgejo.org/forgejo/runner:13.2.1 \
 #        forgejo-runner generate-config > configs/runner/data/config.yml
 #    Then merge in the `runner.labels` and `container` sections from this file.
 #

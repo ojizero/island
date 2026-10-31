@@ -17,7 +17,7 @@ services:
 
   forgejo:
     container_name: forgejo
-    image: codeberg.org/forgejo/forgejo:16.0.5
+    image: codeberg.org/forgejo/forgejo:17.0.1
     restart: unless-stopped
     environment:
       USER_UID: ${PUID:-1000}
@@ -74,7 +74,7 @@ services:
 
   docker-dind:
     container_name: forgejo-dind
-    image: docker:29.8.1-dind
+    image: docker:29.9.2-dind
     restart: unless-stopped
     privileged: true
     environment:
@@ -91,7 +91,7 @@ services:
 
   forgejo-runner:
     container_name: forgejo-runner
-    image: code.forgejo.org/forgejo/runner:13.2.0
+    image: code.forgejo.org/forgejo/runner:13.2.1
     restart: unless-stopped
     user: ${PUID:-1000}:${PGID:-1000}
     environment:
