@@ -7,11 +7,31 @@
 # non-proxied socket)
 ---
 services:
+  # Read-only Docker API for Traefik's Docker provider. Only Traefik uses it.
+  # A new stack that needs Docker gets its own proxy with its own permissions.
+  docker-proxy:
+    container_name: traefik-docker-proxy
+    image: linuxserver/socket-proxy:3.4.2-r0-ls89
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+      - NETWORKS=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    tmpfs:
+      - /run
+    read_only: true
+    expose:
+      - "2375"
+    networks:
+      - dockernet
+
   proxy:
     container_name: traefik
     image: traefik:v3.7.9
     restart: unless-stopped
     depends_on:
+      - docker-proxy
       - errors
     env_file: .env
     volumes:
@@ -47,11 +67,12 @@ services:
       - servicenet
 
 networks:
-  # Grant Traefik access to the administrive docker net
-  # to be given access to the Docker socket proxy.
+  # Connects Traefik to the Docker socket proxy only. Internal, so the
+  # proxy has no route out and no other container can reach it.
   dockernet:
-    name: admin-dockernet
-    external: true
+    name: gateway-dockernet
+    driver: bridge
+    internal: true
 
   # Services managed behind Traefik must use this network
   # as an externally defined one in their configs.
