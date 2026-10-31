@@ -4,7 +4,7 @@ x-data-target: &data-target /data
 services:
   karakeep-web:
     container_name: karakeep-web
-    image: ghcr.io/karakeep-app/karakeep:0.33.2
+    image: ghcr.io/karakeep-app/karakeep:0.34.1
     restart: unless-stopped
     environment:
       DATA_DIR: *data-target
@@ -33,7 +33,7 @@ services:
 
   karakeep-chrome:
     container_name: karakeep-chrome
-    image: ghcr.io/browserless/chromium:v2.56.0
+    image: ghcr.io/browserless/chromium:v2.58.1
     restart: unless-stopped
     environment:
       - CONCURRENT=5
@@ -66,7 +66,7 @@ services:
 
   hister:
     container_name: hister
-    image: ghcr.io/asciimoo/hister:v0.18.0
+    image: ghcr.io/asciimoo/hister:v0.21.0
     init: true
     restart: unless-stopped
     read_only: true
@@ -95,7 +95,7 @@ services:
       - traefik.http.routers.hister.rule=Host(`hister.tn.ojizero.dev`)
       - traefik.http.routers.hister.service=hister
       - traefik.http.services.hister.loadbalancer.server.port=4433
-      # v0.18.0 refreshes signed-in sessions even for public assets. A failed
+      # v0.18.0 and later refresh signed-in sessions even for public assets. A failed
       # refresh returns text/plain HTTP 500 and prevents the frontend loading.
       # Serve immutable assets without cookies to avoid that session write.
       - traefik.http.routers.hister-assets.entrypoints=web-secure
