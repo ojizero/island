@@ -26,3 +26,12 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 ## dashboard
 
 - Runs on Atlas under the Compose project name `dashboards`.
+
+## firewall
+
+- After a DSM or Container Manager update, check that the rule still applies: from a LAN host with a route to `172.16.0.0/12` via Atlas, a container port such as `172.21.0.7:11011` must time out. Synology wires `FORWARD` → `DEFAULT_FORWARD` → `DOCKER-USER`; if an update changes that, the rule can stop applying without an error.
+
+## forge
+
+- Atlas's kernel has no overlayfs and no iptables raw table, so dind needs `--storage-driver=btrfs` and `DOCKER_INSECURE_NO_IPTABLES_RAW=1`. Keep both on a dind upgrade.
+- Job containers resolve only dotted names through dind's DNS, so the runner address and `cache.host` use `<container>.<network>`.
