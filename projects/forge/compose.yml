@@ -79,9 +79,15 @@ services:
     privileged: true
     environment:
       DOCKER_TLS_CERTDIR: ""
-    command: ["dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false"]
+      # Atlas's kernel has no iptables raw table (CONFIG_IP_NF_RAW).
+      DOCKER_INSECURE_NO_IPTABLES_RAW: "1"
+    # Atlas's kernel has no overlayfs, and /var/lib/docker is on btrfs.
+    command: ["dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false", "--storage-driver=btrfs"]
+    # Job containers run inside dind: they need egress and must reach
+    # Forgejo and the runner's cache proxy. Through dind they resolve only
+    # dotted names, such as forgejo.forgejo-actions.
     networks:
-      - forgejo-dind
+      - forgejo-actions
     healthcheck:
       test: ["CMD", "docker", "-H", "tcp://127.0.0.1:2375", "info"]
       interval: 5s
@@ -100,7 +106,6 @@ services:
       - ${FORGEJO_RUNNER_DATA_PATH:-./configs/runner/data}:/data
     networks:
       - forgejo-actions
-      - forgejo-dind
     depends_on:
       docker-dind:
         condition: service_healthy
@@ -118,11 +123,6 @@ networks:
 
   forgejo-db:
     name: forgejo-db
-    driver: bridge
-    internal: true
-
-  forgejo-dind:
-    name: forgejo-dind
     driver: bridge
     internal: true
 

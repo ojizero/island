@@ -8,10 +8,12 @@
 # 2. Create a registration token (Site administration → Actions → Runners):
 #      docker exec -u git forgejo forgejo actions generate-runner-token
 #
-# 3. Register once before starting the daemon (use the internal Forgejo URL):
+# 3. Register once before starting the daemon. Use the internal Forgejo URL
+#    as <container>.<network>: jobs get it as GITHUB_SERVER_URL, and dind's
+#    DNS does not forward single-label names such as `forgejo`.
 #      docker compose run --rm --no-deps forgejo-runner \
 #        forgejo-runner register --config /data/config.yml --no-interactive \
-#        --instance http://forgejo:3000 \
+#        --instance http://forgejo.forgejo-actions:3000 \
 #        --token <registration-token> \
 #        --name atlas-forgejo-runner
 #    Labels are taken from `runner.labels` below, not the CLI `--labels` flag.
@@ -41,8 +43,10 @@ cache:
   dir: ""
   external_server: ""
   secret: ""
-  host: ""
-  proxy_port: 0
+  # Job containers run inside dind. Its DNS forwards only dotted names,
+  # so use <container>.<network>.
+  host: "forgejo-runner.forgejo-actions"
+  proxy_port: 4001
 
 container:
   network: ""
