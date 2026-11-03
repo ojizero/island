@@ -5,6 +5,11 @@ services:
     image: cloudflare/cloudflared:2026.10.7
     restart: unless-stopped
     command: tunnel --no-autoupdate run
+    environment:
+      # cloudflared cannot turn its metrics server off. On loopback only
+      # cloudflared reaches it; on 0.0.0.0 it shows the ingress map and pprof.
+      TUNNEL_METRICS: 127.0.0.1:20241
+      TUNNEL_MANAGEMENT_DIAGNOSTICS: "false"
     env_file: .env
     networks:
       - servicenet
