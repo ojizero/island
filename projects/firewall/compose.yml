@@ -1,0 +1,42 @@
+---
+# Drops new connections from outside Docker (LAN, Tailscale subnet routes and
+# exit node) to container IPs, so services are reachable only through
+# published ports such as Traefik's. Atlas's Docker 24 forwards routed traffic
+# to unpublished container ports, and its kernel has no iptables raw table for
+# the protection that Docker 28+ adds. The loop adds the rule back after a
+# reboot or a Docker restart, and removes it when the stack stops.
+#
+# --ctorigdst matches the address the client dialed, so published ports keep
+# working even if Docker ever DNATs them to container IPs.
+services:
+  docker-user:
+    container_name: firewall
+    # Ships iptables-legacy; the nft backend fails on Atlas's kernel.
+    image: docker:29.9.2-dind
+    restart: unless-stopped
+    network_mode: host
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      # Share the host's lock: legacy iptables rewrites whole tables, so an
+      # unlocked write can race dockerd and drop its rules.
+      - type: bind
+        source: /run/xtables.lock
+        target: /run/xtables.lock
+        bind:
+          create_host_path: false
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        rule="DOCKER-USER ! -i docker+ -m conntrack --ctstate NEW --ctorigdst 172.16.0.0/12 -j DROP"
+        trap 'iptables-legacy -w -D $$rule; exit 0' TERM INT
+        while :; do
+          iptables-legacy -w -C $$rule 2>/dev/null || { iptables-legacy -w -I $$rule && echo "rule inserted"; }
+          sleep 10 & wait $$!
+        done
