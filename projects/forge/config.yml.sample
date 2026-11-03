@@ -51,8 +51,9 @@ cache:
 container:
   network: ""
   enable_ipv6: false
-  # Required for workflows that run Docker-in-Docker service containers.
-  privileged: true
+  # A privileged job sees Atlas's disks and kernel through dind: it is root
+  # on Atlas. See AGENTS.md "Docker lockdown".
+  privileged: false
   valid_volumes: []
   docker_host: "-"
   force_pull: false
