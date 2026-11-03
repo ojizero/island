@@ -35,3 +35,4 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 
 - Atlas's kernel has no overlayfs and no iptables raw table, so dind needs `--storage-driver=btrfs` and `DOCKER_INSECURE_NO_IPTABLES_RAW=1`. Keep both on a dind upgrade.
 - Job containers resolve only dotted names through dind's DNS, so the runner address and `cache.host` use `<container>.<network>`.
+- The stack runs on Atlas and on sagittarius-a: deploy a change to both. Atlas's Compose 2.20 recreates a service when its `profiles` change.

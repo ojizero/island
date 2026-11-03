@@ -2,6 +2,7 @@
 services:
   postgres:
     container_name: forgejo-postgres
+    profiles: [atlas]
     image: postgres:18.6
     restart: unless-stopped
     environment:
@@ -17,6 +18,7 @@ services:
 
   forgejo:
     container_name: forgejo
+    profiles: [atlas]
     image: codeberg.org/forgejo/forgejo:17.0.1
     restart: unless-stopped
     environment:
@@ -74,6 +76,7 @@ services:
 
   docker-dind:
     container_name: forgejo-dind
+    profiles: [atlas]
     image: docker:29.9.2-dind
     restart: unless-stopped
     privileged: true
@@ -107,6 +110,7 @@ services:
 
   forgejo-runner:
     container_name: forgejo-runner
+    profiles: [atlas]
     image: code.forgejo.org/forgejo/runner:13.2.1
     restart: unless-stopped
     user: ${PUID:-1000}:${PGID:-1000}
@@ -127,6 +131,59 @@ services:
       - -c
       - exec forgejo-runner daemon --config /data/config.yml
 
+  # Sagittarius A* runs a second runner for jobs that Atlas's kernel 4.4
+  # cannot run, such as zig builds that need statx.
+  sagittarius-dind:
+    container_name: sagittarius-dind
+    profiles: [sagittarius-a]
+    image: docker:29.9.2-dind-rootless
+    restart: unless-stopped
+    # dockerd runs as uid 1000 in its own user namespace, so a job that
+    # escapes is not root on the host. Making that namespace needs
+    # privileged.
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command: ["dockerd", "--host=unix:///run/user/1000/docker.sock"]
+    volumes:
+      - sagittarius-socket:/run/user
+      - ./sagittarius-resolv.conf:/etc/resolv.conf:ro
+    networks:
+      - sagittarius-actions
+    healthcheck:
+      test: ["CMD", "docker", "-H", "unix:///run/user/1000/docker.sock", "info"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  sagittarius-runner:
+    container_name: sagittarius-runner
+    profiles: [sagittarius-a]
+    image: code.forgejo.org/forgejo/runner:13.2.1
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      DOCKER_HOST: unix:///run/user/1000/docker.sock
+    volumes:
+      - ./configs/sagittarius-runner:/data
+      - sagittarius-socket:/run/user
+    # LAN DNS does not resolve *.tn names, and MagicDNS does not answer
+    # containers. 100.64.0.2 is Atlas on the tailnet.
+    extra_hosts:
+      - forge.tn.ojizero.dev:100.64.0.2
+    networks:
+      sagittarius-actions:
+        # Jobs cannot resolve container names, so the cache host is this IP.
+        ipv4_address: 10.250.0.10
+    depends_on:
+      sagittarius-dind:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - exec forgejo-runner daemon --config /data/config.yml
+
 networks:
   servicenet:
     name: servicenet
@@ -141,5 +198,13 @@ networks:
     name: forgejo-actions
     driver: bridge
 
+  sagittarius-actions:
+    name: sagittarius-actions
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.250.0.0/24
+
 volumes:
   dind-socket:
+  sagittarius-socket:

@@ -1,0 +1,26 @@
+# Forgejo runner config for the sagittarius-a profile. Set it up as in
+# config.yml.sample, with these differences:
+# - It goes to configs/sagittarius-runner/config.yml.
+# - Register with `docker compose run --rm --no-deps sagittarius-runner ...`,
+#   --instance https://forge.tn.ojizero.dev and --name sagittarius-a.
+
+runner:
+  file: .runner
+  capacity: 1
+  timeout: 3h
+  labels:
+    - "sagittarius-a:docker://node:22-bookworm"
+
+cache:
+  enabled: true
+  # Job containers cannot resolve container names, so use the runner's
+  # fixed IP from compose.yml.
+  host: "10.250.0.10"
+  proxy_port: 4001
+
+container:
+  privileged: false
+  # Same host entry as the runner's extra_hosts in compose.yml.
+  options: --cap-drop=ALL --security-opt=no-new-privileges --add-host=forge.tn.ojizero.dev:100.64.0.2
+  valid_volumes: []
+  docker_host: "-"
