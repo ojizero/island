@@ -2,7 +2,7 @@
 services:
   liminal:
     container_name: liminal
-    image: ghcr.io/ojizero/liminal:1.13.0
+    image: ghcr.io/ojizero/liminal:1.13.1
     restart: unless-stopped
     environment:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -16,13 +16,6 @@ services:
       AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
       PUID: ${PUID:-911}
       PGID: ${PGID:-911}
-      # The image defaults to Erlang distribution with a cookie that is
-      # public in the image: anyone who reaches EPMD can run code.
-      RELEASE_DISTRIBUTION: none
-    # The image's healthcheck runs `bin/liminal pid`, an RPC that needs
-    # distribution. Check that the HTTP port accepts connections instead.
-    healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4000"]
     volumes:
       - ./data:/data
     expose:
