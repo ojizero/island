@@ -5,17 +5,19 @@
 #        forgejo-runner generate-config > configs/runner/data/config.yml
 #    Then merge in the `runner.labels` and `container` sections from this file.
 #
-# 2. Create a registration token (Site administration → Actions → Runners):
-#      docker exec -u git forgejo forgejo actions generate-runner-token
+# 2. Create a registration token for the `ojizero` owner (or in the UI:
+#    the user's Settings → Actions → Runners):
+#      docker exec -u git forgejo forgejo actions generate-runner-token --scope ojizero
 #
 # 3. Register once before starting the daemon. Use the internal Forgejo URL
 #    as <container>.<network>: jobs get it as GITHUB_SERVER_URL, and dind's
-#    DNS does not forward single-label names such as `forgejo`.
+#    DNS does not forward single-label names such as `forgejo`. The token is
+#    scoped to the `ojizero` owner, so only that owner's repos get jobs.
 #      docker compose run --rm --no-deps forgejo-runner \
 #        forgejo-runner register --config /data/config.yml --no-interactive \
 #        --instance http://forgejo.forgejo-actions:3000 \
 #        --token <registration-token> \
-#        --name atlas-forgejo-runner
+#        --name atlas-ojizero-runner
 #    Labels are taken from `runner.labels` below, not the CLI `--labels` flag.
 #
 # 4. Start the stack: docker compose up -d
@@ -54,6 +56,9 @@ container:
   # A privileged job sees Atlas's disks and kernel through dind: it is root
   # on Atlas. See AGENTS.md "Docker lockdown".
   privileged: false
+  # Jobs need no capabilities, and dropping them shrinks the kernel surface
+  # that a job can use to escape into the privileged dind.
+  options: --cap-drop=ALL --security-opt=no-new-privileges
   valid_volumes: []
   docker_host: "-"
   force_pull: false
