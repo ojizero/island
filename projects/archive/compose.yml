@@ -10,7 +10,8 @@ services:
       DATA_DIR: *data-target
       MEILI_ADDR: http://karakeep-meilisearch:7700
       NEXTAUTH_URL: https://keep.ojizero.dev
-      BROWSER_WEBSOCKET_URL: ws://karakeep-chrome:3000/chromium/playwright
+      BROWSER_WEB_URL: http://karakeep-chrome:9222
+      DISABLE_SIGNUPS: "true"
     env_file:
       - .env
     # user: ${PUID:-1000}:${PGID:-1000}
@@ -31,17 +32,25 @@ services:
       - traefik.http.routers.karakeep.service=karakeep
       - traefik.http.services.karakeep.loadbalancer.server.port=3000
 
+  # Karakeep's own Chrome image. It serves DevTools on 9222 with no auth, so
+  # only karakeep-web may share its network (firewall stack drops LAN access).
   karakeep-chrome:
     container_name: karakeep-chrome
-    image: ghcr.io/browserless/chromium:v2.58.1
+    image: ghcr.io/karakeep-app/karakeep-chrome:156.0.8078.47-r2
     restart: unless-stopped
-    environment:
-      - CONCURRENT=5
-      - TIMEOUT=120000
-      - QUEUED=10
-      - HEALTH=true
+    init: true
+    command:
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --hide-scrollbars
+      - --disable-blink-features=AutomationControlled
+      - --window-size=1440,900
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     expose:
-      - "3000"
+      - "9222"
     networks:
       - archive-sphere
 
