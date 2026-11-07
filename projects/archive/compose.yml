@@ -36,7 +36,7 @@ services:
   # only karakeep-web may share its network (firewall stack drops LAN access).
   karakeep-chrome:
     container_name: karakeep-chrome
-    image: ghcr.io/karakeep-app/karakeep-chrome:156.0.8078.47-r2
+    image: ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.38-r1
     restart: unless-stopped
     init: true
     command:
