@@ -14,6 +14,7 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 ## adguard
 
 - Runs on Atlas under the Compose project name `adguard-home`.
+- AdGuard is Atlas's DNS server. While it restarts, Atlas cannot resolve names, and pulls for other stacks fail. When you deploy many stacks, deploy adguard last, or pull the images for the other stacks first.
 
 ## archive
 
@@ -29,7 +30,7 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 
 ## firewall
 
-- After a DSM or Container Manager update, check that the rule still applies: from a LAN host with a route to `172.16.0.0/12` via Atlas, a container port such as `172.21.0.7:11011` must time out. Synology wires `FORWARD` → `DEFAULT_FORWARD` → `DOCKER-USER`; if an update changes that, the rule can stop applying without an error.
+- After a DSM or Container Manager update, check that the rule still applies: from a LAN host with a route to `172.16.0.0/12` via Atlas, a port that a container listens on must time out. Container IPs and ports change, so pick the target when you run the check: a container's IP from `docker --context atlas network inspect servicenet`, and a port it listens on from its `expose` in the repo. As a control, Atlas's SSH (port 22) on the network's gateway IP must connect; this shows that the route goes through Atlas. Synology wires `FORWARD` → `DEFAULT_FORWARD` → `DOCKER-USER`; if an update changes that, the rule can stop applying without an error.
 
 ## forge
 
