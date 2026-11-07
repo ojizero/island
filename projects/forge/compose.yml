@@ -77,7 +77,7 @@ services:
   docker-dind:
     container_name: forgejo-dind
     profiles: [atlas]
-    image: docker:29.9.2-dind
+    image: docker:29.9.3-dind
     restart: unless-stopped
     privileged: true
     environment:
@@ -136,7 +136,7 @@ services:
   sagittarius-dind:
     container_name: sagittarius-dind
     profiles: [sagittarius-a]
-    image: docker:29.9.2-dind-rootless
+    image: docker:29.9.3-dind-rootless
     restart: unless-stopped
     # dockerd runs as uid 1000 in its own user namespace, so a job that
     # escapes is not root on the host. Making that namespace needs
