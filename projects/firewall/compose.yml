@@ -12,7 +12,7 @@ services:
   docker-user:
     container_name: firewall
     # Ships iptables-legacy; the nft backend fails on Atlas's kernel.
-    image: docker:29.9.2-dind
+    image: docker:29.9.3-dind
     restart: unless-stopped
     network_mode: host
     read_only: true
