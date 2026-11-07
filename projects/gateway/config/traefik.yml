@@ -29,8 +29,6 @@ entryPoints:
               - "*.tn.ojizero.dev"
               - "*.ln.ojizero.dev"
               - "*.wn.ojizero.dev"
-              # Nested Buzz communities (*.tn... covers buzz.tn..., not *.buzz.tn...).
-              - "*.buzz.tn.ojizero.dev"
 
 providers:
   docker:
