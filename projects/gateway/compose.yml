@@ -11,7 +11,7 @@ services:
   # A new stack that needs Docker gets its own proxy with its own permissions.
   docker-proxy:
     container_name: traefik-docker-proxy
-    image: linuxserver/socket-proxy:3.4.7-r0-ls104
+    image: linuxserver/socket-proxy:3.4.7-r0-ls105
     restart: unless-stopped
     environment:
       - CONTAINERS=1
