@@ -11,7 +11,7 @@ Input: the stack name. Ask for it when missing.
 
 ## Rules
 
-- Read all of `UPGRADES.md` first.
+- Read all of `OPERATIONS.md` first.
 - Run Compose from the stack's directory on Atlas. From the local checkout, relative bind mounts would resolve to local paths.
 - Always pass `-p <project>`.
 - `.env` files and service data belong to the user. Read `.env` variable names only, never values.
@@ -22,7 +22,7 @@ Input: the stack name. Ask for it when missing.
 2. **Diff** the repo against Atlas. The deployable files are the stack's tracked files minus `.gitignore`, `*.sample`, and `*.md`. Fetch each Atlas copy into `/tmp/atlas-<stack>-<date>/` and keep it, since it is the rollback. Done when you know every changed file and every image moving from its deployed tag to its repo tag.
 3. **Work out the steps** for every change by reasoning over its traces:
    - The stack's commits back to the one whose `compose.yml` matches the Atlas copy (`git log -p -- projects/<stack>/compose.yml`): their changelog lines name what changed and what may break.
-   - Caveats in `UPGRADES.md` that apply to this stack.
+   - Caveats in `OPERATIONS.md` that apply to this stack.
    - The release notes between the deployed and repo tags, when the traces leave a change unclear.
    - Host-only state the repo cannot see: variables in `.env.sample` missing from `.env`, removed or renamed keys in git-ignored config files on Atlas, and new bind-mount directories that must exist with the right owner.
 
@@ -34,4 +34,4 @@ Input: the stack name. Ask for it when missing.
 
    Present the plan, then run it. Wait for the user's go-ahead only on an extreme case: a step no backup or saved file can undo, such as wiping data; a change escalation could not settle; or a first deploy.
 5. **Run** the plan. Hand user steps over and wait for them to confirm each one. Follow each changed container's first start with `docker --context atlas logs -f <container>`, and let migrations finish without restarting. If validation or startup fails, stop and propose a rollback from the saved files and backups. Done when every container is running, healthy where it has a healthcheck, and its logs show no errors after any migration finished.
-6. **Report**: what was deployed, backups made and when they are safe to delete, the remaining after steps, and caveats worth adding to `UPGRADES.md`.
+6. **Report**: what was deployed, backups made and when they are safe to delete, the remaining after steps, and caveats worth adding to `OPERATIONS.md`.

@@ -11,7 +11,7 @@ Input: the stack name. Ask for it when missing.
 
 ## Rules
 
-- Read all of `UPGRADES.md` first.
+- Read all of `OPERATIONS.md` first.
 - Keep each image's tag style (`YYYY.MM.DD-hash`, `sha-<hash>`, linuxserver `-lsNN`, semver) and pin exact tags.
 - Stay on the image's current release channel: stable stays stable, and `beta` or nightly-style tags only follow a tag already on that channel.
 - `.env` files belong to the user. New variables go in `.env.sample`.

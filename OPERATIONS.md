@@ -1,6 +1,6 @@
-# Upgrade caveats
+# Operations
 
-Catches learned from past upgrades and deploys: general notes first, then one `## <stack>` section each.
+Rules and catches for running, deploying, and upgrading stacks: general notes first, then one `## <stack>` section each.
 
 ## Breaking changes
 
