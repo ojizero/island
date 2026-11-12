@@ -1,0 +1,122 @@
+---
+# Finance tools. Sure is the record of accounts and transactions.
+#
+# Sure reads its settings from .env (env_file). The values below are fixed
+# for this host and override .env.
+x-sure-env: &sure-env
+  SELF_HOSTED: "true"
+  APP_DOMAIN: sure.tn.ojizero.dev
+  # Traefik terminates TLS.
+  RAILS_FORCE_SSL: "false"
+  RAILS_ASSUME_SSL: "true"
+  DB_HOST: sure-db
+  DB_PORT: "5432"
+  REDIS_URL: redis://sure-redis:6379/1
+  # No in-app chat. Agents connect to https://sure.tn.ojizero.dev/mcp (OAuth).
+  ASSISTANT_TYPE: mcp_only
+
+services:
+  sure-web:
+    container_name: sure-web
+    image: ghcr.io/we-promise/sure:0.7.6
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment: *sure-env
+    # Sure runs as uid 1000. Create ./sure/storage owned by 1000:1000
+    # before the first start, or Docker creates it owned by root.
+    volumes:
+      - ./sure/storage:/rails/storage
+    expose:
+      - "3000"
+    networks:
+      - servicenet
+      - sure-backend
+    depends_on:
+      sure-db:
+        condition: service_healthy
+      sure-redis:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.sure.entrypoints=web-secure
+      - traefik.http.routers.sure.rule=Host(`sure.tn.ojizero.dev`)
+      - traefik.http.routers.sure.service=sure
+      - traefik.http.services.sure.loadbalancer.server.port=3000
+
+  # Background jobs: syncs (IBKR Flex), imports, and market data. It needs
+  # egress, but listens on nothing.
+  sure-worker:
+    container_name: sure-worker
+    image: ghcr.io/we-promise/sure:0.7.6
+    restart: unless-stopped
+    command: bundle exec sidekiq
+    env_file:
+      - .env
+    environment: *sure-env
+    volumes:
+      - ./sure/storage:/rails/storage
+    networks:
+      - sure-egress
+      - sure-backend
+    depends_on:
+      sure-db:
+        condition: service_healthy
+      sure-redis:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # PINNED: keep postgres on major 17. The Sure image ships PostgreSQL 17
+  # client tools (pg_dump), which cannot read a newer server.
+  sure-db:
+    container_name: sure-db
+    image: postgres:17.11
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sure_production}
+      POSTGRES_USER: ${POSTGRES_USER:-sure}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ./sure/postgres:/var/lib/postgresql/data
+    networks:
+      - sure-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  sure-redis:
+    container_name: sure-redis
+    image: redis:8.10.3
+    restart: unless-stopped
+    volumes:
+      - ./sure/redis:/data
+    networks:
+      - sure-backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  servicenet:
+    name: servicenet
+    external: true
+
+  sure-backend:
+    name: sure-backend
+    driver: bridge
+    internal: true
+
+  sure-egress:
+    name: sure-egress
+    driver: bridge

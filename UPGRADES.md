@@ -37,3 +37,9 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 - Atlas's kernel has no overlayfs and no iptables raw table, so dind needs `--storage-driver=btrfs` and `DOCKER_INSECURE_NO_IPTABLES_RAW=1`. Keep both on a dind upgrade.
 - Job containers resolve only dotted names through dind's DNS, so the runner address and `cache.host` use `<container>.<network>`.
 - The stack runs on Atlas and on sagittarius-a: deploy a change to both. Atlas's Compose 2.20 recreates a service when its `profiles` change.
+
+## treasury
+
+- `postgres`: stay on major 17 until the Sure image ships newer PostgreSQL client tools. Its `pg_dump` cannot read a newer server ([Sure Docker docs](https://github.com/we-promise/sure/blob/v0.7.6/docs/hosting/docker.md), "Backups, upgrades and rollbacks").
+- `ghcr.io/we-promise/sure`: pin a release such as `0.7.6`, not `stable`. Tags have no `v` prefix. Skip the `-alpha` pre-releases. Sure migrates the database on start, so back up `sure/postgres` first.
+- Never change `SECRET_KEY_BASE` in `.env`: Sure derives its encryption keys from it.
