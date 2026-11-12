@@ -11,6 +11,10 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 - **Revert** when it goes wrong: restore the previous files, copy the backup directory back over the data, and redeploy the old tag.
 - **Dependency majors**: when other services depend on a service, take its major only if every dependent supports the new version; otherwise skip it. For example, Postgres stays on its current major until every app using it supports the next one.
 
+## Deploys
+
+- Atlas's Docker does not create a missing bind-mount source; `up` fails with `Bind mount failed: '<path>' does not exist`. On a first deploy, create every bind-mount directory first, with the owner the container needs.
+
 ## adguard
 
 - Runs on Atlas under the Compose project name `adguard-home`.
@@ -43,3 +47,4 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 - `postgres`: stay on major 17 until the Sure image ships newer PostgreSQL client tools. Its `pg_dump` cannot read a newer server ([Sure Docker docs](https://github.com/we-promise/sure/blob/v0.7.6/docs/hosting/docker.md), "Backups, upgrades and rollbacks").
 - `ghcr.io/we-promise/sure`: pin a release such as `0.7.6`, not `stable`. Tags have no `v` prefix. Skip the `-alpha` pre-releases. Sure migrates the database on start, so back up `sure/postgres` first.
 - Never change `SECRET_KEY_BASE` in `.env`: Sure derives its encryption keys from it.
+- The first start builds the database, about 150 tables, and takes about 7 minutes on Atlas. Do not restart it. Until it finishes, `sure-web` logs nothing and `sure-worker` logs `relation ... does not exist` errors. When `/up` returns 200, restart `sure-worker` once.
