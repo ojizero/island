@@ -14,6 +14,7 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 ## Deploys
 
 - Atlas's Docker does not create a missing bind-mount source; `up` fails with `Bind mount failed: '<path>' does not exist`. On a first deploy, create every bind-mount directory first, with the owner the container needs.
+- Keep each `.env` on Atlas readable only by its owner. The ACL that `/volume1/docker/` passes down gives `everyone` read access. After you create or replace a `.env`, run `/usr/syno/bin/synoacltool -del .env` (skip it when `ls -l` shows no `+`), then `chmod 600 .env`. Compose and Container Manager can still read it. To undo, run `synoacltool -enforce-inherit .env`. If someone applies the parent's permissions to its children in DSM, run the two commands again.
 
 ## adguard
 
