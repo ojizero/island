@@ -43,6 +43,10 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 - Job containers resolve only dotted names through dind's DNS, so the runner address and `cache.host` use `<container>.<network>`.
 - The stack runs on Atlas and on sagittarius-a: deploy a change to both. Atlas's Compose 2.20 recreates a service when its `profiles` change.
 
+## media
+
+- Jellyfin needs more inotify watches than DSM's limit of 8192. `tasks/raise_inotify_watches.sh` raises it to 131072. Add it in DSM Task Scheduler as a boot-up triggered task with user `root`, run it once, then restart `jellyfin`. Check: `docker --context atlas logs --since <start> jellyfin 2>&1 | grep -c "inotify watches"` prints `0`.
+
 ## treasury
 
 - `postgres`: stay on major 17 until the Sure image ships newer PostgreSQL client tools. Its `pg_dump` cannot read a newer server ([Sure Docker docs](https://github.com/we-promise/sure/blob/v0.7.6/docs/hosting/docker.md), "Backups, upgrades and rollbacks").
