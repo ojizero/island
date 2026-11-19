@@ -77,7 +77,7 @@ services:
   # client tools (pg_dump), which cannot read a newer server.
   sure-db:
     container_name: sure-db
-    image: postgres:17.11
+    image: postgres:17.12
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-sure_production}
