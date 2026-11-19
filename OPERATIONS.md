@@ -23,7 +23,12 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 
 ## archive
 
-- `getmeili/meilisearch`: pin to the version Karakeep recommends for the target Karakeep release. A Meilisearch bump can need a data migration (wiping `data.ms` and a full reindex). See the [Karakeep Meilisearch upgrade guide](https://docs.karakeep.app/administration/troubleshooting#upgrading-meilisearch---migrating-the-meilisearch-db-version).
+- `getmeili/meilisearch`: pin to the version that Karakeep's own compose uses for the target Karakeep release. A new Meilisearch version cannot open the old `data.ms`: the container exits with `Your database version (...) is incompatible`. Migrate it in place, as the [Karakeep Meilisearch upgrade guide](https://github.com/karakeep-app/karakeep/blob/v0.35.0/docs/docs/06-administration/10-meilisearch-upgrade.md) says:
+  1. With the stack down, back up `meilisearch` to `meilisearch.bak.<old version>`. The migration is one-way.
+  2. Start `karakeep-meilisearch` once with `MEILI_UPGRADE_DB: "true"` in its environment (before v1.51: `MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE`), and wait until the logs show it listening.
+  3. Remove the variable and recreate the container. Do not keep it in the repo: the next image change would then migrate the data without asking.
+
+  If the migration fails, delete `data.ms`, start Meilisearch, and run `Admin Settings > Background Jobs > Reindex All Bookmarks` in Karakeep (and `Regenerate Embeddings` when embeddings are on).
 
 ## cloudflare
 
