@@ -55,10 +55,7 @@ services:
       - archive-sphere
 
   # PINNED: keep getmeili/meilisearch at the version Karakeep's own compose uses
-  # for the pinned Karakeep release (v1.55.0 for 0.35.0). Do not bump it alone.
-  # A new Meilisearch version cannot open the old data.ms: back up ./meilisearch,
-  # start once with MEILI_UPGRADE_DB=true, then remove that variable.
-  # https://github.com/karakeep-app/karakeep/blob/v0.35.0/docs/docs/06-administration/10-meilisearch-upgrade.md
+  # for the pinned Karakeep release. See OPERATIONS.md.
   karakeep-meilisearch:
     container_name: karakeep-meilisearch
     image: getmeili/meilisearch:v1.55.0
@@ -66,6 +63,7 @@ services:
     # user: ${PUID:-1000}:${PGID:-1000}
     environment:
       MEILI_NO_ANALYTICS: "true"
+      MEILI_UPGRADE_DB: "true"
     env_file:
       - .env
     volumes:
