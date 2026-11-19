@@ -3,7 +3,7 @@ services:
   postgres:
     container_name: forgejo-postgres
     profiles: [atlas]
-    image: postgres:18.6
+    image: postgres:18.7
     restart: unless-stopped
     environment:
       POSTGRES_DB: forgejo
@@ -19,7 +19,7 @@ services:
   forgejo:
     container_name: forgejo
     profiles: [atlas]
-    image: codeberg.org/forgejo/forgejo:17.0.1
+    image: codeberg.org/forgejo/forgejo:17.0.2
     restart: unless-stopped
     environment:
       USER_UID: ${PUID:-1000}
@@ -77,7 +77,7 @@ services:
   docker-dind:
     container_name: forgejo-dind
     profiles: [atlas]
-    image: docker:29.9.3-dind
+    image: docker:29.10.0-dind
     restart: unless-stopped
     privileged: true
     environment:
@@ -111,7 +111,7 @@ services:
   forgejo-runner:
     container_name: forgejo-runner
     profiles: [atlas]
-    image: code.forgejo.org/forgejo/runner:13.2.1
+    image: code.forgejo.org/forgejo/runner:13.2.2
     restart: unless-stopped
     user: ${PUID:-1000}:${PGID:-1000}
     environment:
@@ -136,7 +136,7 @@ services:
   sagittarius-dind:
     container_name: sagittarius-dind
     profiles: [sagittarius-a]
-    image: docker:29.9.3-dind-rootless
+    image: docker:29.10.0-dind-rootless
     restart: unless-stopped
     # dockerd runs as uid 1000 in its own user namespace, so a job that
     # escapes is not root on the host. Making that namespace needs
@@ -160,7 +160,7 @@ services:
   sagittarius-runner:
     container_name: sagittarius-runner
     profiles: [sagittarius-a]
-    image: code.forgejo.org/forgejo/runner:13.2.1
+    image: code.forgejo.org/forgejo/runner:13.2.2
     restart: unless-stopped
     user: "1000:1000"
     environment:
