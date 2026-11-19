@@ -7,6 +7,7 @@ Rules and catches for running, deploying, and upgrading stacks: general notes fi
 Be bold: take the upgrade, breaking or not, and make it safe to undo.
 
 - **Back up** when a change to state cannot be undone, such as a one-way migration. With the stack down, copy the data directory wholesale to `<path>.bak.<old version>`.
+  Some data files are readable only by root or the container user (AdGuard's `AdGuardHome.yaml`, the `asp/` and `DataProtection-Keys/` keys in the *arr configs), so plain `cp` skips them. Copy as root with a one-off container: `docker run --rm -v <dir>:/src:ro -v <parent>:/dst alpine cp -a /src/. /dst/<name>.bak.<old version>`.
 - **Monitor** the first start through the logs. Let migrations finish without restarting, then check the service works.
 - **Revert** when it goes wrong: restore the previous files, copy the backup directory back over the data, and redeploy the old tag.
 - **Dependency majors**: when other services depend on a service, take its major only if every dependent supports the new version; otherwise skip it. For example, Postgres stays on its current major until every app using it supports the next one.
@@ -14,6 +15,7 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 ## Deploys
 
 - Atlas's Docker does not create a missing bind-mount source; `up` fails with `Bind mount failed: '<path>' does not exist`. On a first deploy, create every bind-mount directory first, with the owner the container needs.
+- Atlas pulls from Docker Hub without signing in, and shares the 100-pulls-an-hour limit with the laptops on the same public IP. Parallel deploys hit it with `toomanyrequests`. Pull before you stop a stack. If the limit is hit, pull `mirror.gcr.io/<namespace>/<image>:<tag>` (`library/` for official images), check that its digest matches the Docker Hub API, tag it with the Docker Hub name, and run `up -d --pull never`.
 - Keep each `.env` on Atlas readable only by its owner. The ACL that `/volume1/docker/` passes down gives `everyone` read access. After you create or replace a `.env`, run `/usr/syno/bin/synoacltool -del .env` (skip it when `ls -l` shows no `+`), then `chmod 600 .env`. Compose and Container Manager can still read it. To undo, run `synoacltool -enforce-inherit .env`. If someone applies the parent's permissions to its children in DSM, run the two commands again.
 
 ## adguard
@@ -42,6 +44,10 @@ Be bold: take the upgrade, breaking or not, and make it safe to undo.
 - Atlas's kernel has no overlayfs and no iptables raw table, so dind needs `--storage-driver=btrfs` and `DOCKER_INSECURE_NO_IPTABLES_RAW=1`. Keep both on a dind upgrade.
 - Job containers resolve only dotted names through dind's DNS, so the runner address and `cache.host` use `<container>.<network>`.
 - The stack runs on Atlas and on sagittarius-a: deploy a change to both. Atlas's Compose 2.20 recreates a service when its `profiles` change.
+
+## gateway
+
+- The stack defines `servicenet`, which the other stacks join. Do not `down` it for an image change: `pull`, then `up -d`.
 
 ## media
 
