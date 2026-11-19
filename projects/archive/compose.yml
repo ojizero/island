@@ -4,7 +4,7 @@ x-data-target: &data-target /data
 services:
   karakeep-web:
     container_name: karakeep-web
-    image: ghcr.io/karakeep-app/karakeep:0.34.1
+    image: ghcr.io/karakeep-app/karakeep:0.35.0
     restart: unless-stopped
     environment:
       DATA_DIR: *data-target
@@ -36,7 +36,7 @@ services:
   # only karakeep-web may share its network (firewall stack drops LAN access).
   karakeep-chrome:
     container_name: karakeep-chrome
-    image: ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.38-r1
+    image: ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.78-r1
     restart: unless-stopped
     init: true
     command:
@@ -54,12 +54,14 @@ services:
     networks:
       - archive-sphere
 
-  # PINNED: keep getmeili/meilisearch at v1.41.0 - do NOT bump when upgrading this stack.
-  # Karakeep targets this exact version; a newer Meilisearch needs wiping data.ms + full reindex.
-  # https://docs.karakeep.app/administration/troubleshooting#upgrading-meilisearch---migrating-the-meilisearch-db-version
+  # PINNED: keep getmeili/meilisearch at the version Karakeep's own compose uses
+  # for the pinned Karakeep release (v1.55.0 for 0.35.0). Do not bump it alone.
+  # A new Meilisearch version cannot open the old data.ms: back up ./meilisearch,
+  # start once with MEILI_UPGRADE_DB=true, then remove that variable.
+  # https://github.com/karakeep-app/karakeep/blob/v0.35.0/docs/docs/06-administration/10-meilisearch-upgrade.md
   karakeep-meilisearch:
     container_name: karakeep-meilisearch
-    image: getmeili/meilisearch:v1.41.0
+    image: getmeili/meilisearch:v1.55.0
     restart: unless-stopped
     # user: ${PUID:-1000}:${PGID:-1000}
     environment:
@@ -75,7 +77,7 @@ services:
 
   hister:
     container_name: hister
-    image: ghcr.io/asciimoo/hister:v0.21.0
+    image: ghcr.io/asciimoo/nogon:v0.22.0
     init: true
     restart: unless-stopped
     read_only: true
